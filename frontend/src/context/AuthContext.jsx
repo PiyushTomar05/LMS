@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(newUser));
         setToken(newToken);
         setUser(newUser);
-        navigate('/');
+        navigate('/dashboard');
     };
 
     const logout = () => {

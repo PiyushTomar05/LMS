@@ -15,8 +15,8 @@ const SuperAdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await api.get('/schools');
-            setStats({ schools: response.data.length });
+            const response = await api.get('/universities');
+            setStats({ universities: response.data.length });
         } catch (error) {
             console.error("Error fetching stats", error);
         }
@@ -32,7 +32,7 @@ const SuperAdminDashboard = () => {
             {/* Welcome Section */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-8 text-white mb-8">
                 <h2 className="text-3xl font-bold mb-2">Welcome back, {user?.firstName}!</h2>
-                <p className="opacity-90">Manage your schools and administrators from one central hub.</p>
+                <p className="opacity-90">Manage your universities and administrators from one central hub.</p>
             </div>
 
             {/* Quick Stats Row */}
@@ -42,8 +42,8 @@ const SuperAdminDashboard = () => {
                         <School size={24} />
                     </div>
                     <div>
-                        <p className="text-gray-500 text-sm">Total Schools</p>
-                        <h3 className="text-2xl font-bold">{stats.schools}</h3>
+                        <p className="text-gray-500 text-sm">Total Universities</p>
+                        <h3 className="text-2xl font-bold">{stats.universities}</h3>
                     </div>
                 </div>
                 {/* Placeholder for future stats */}
@@ -60,11 +60,11 @@ const SuperAdminDashboard = () => {
 
             <h3 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div onClick={() => navigate('/super-admin/schools')} className="bg-white p-6 rounded-lg shadow hover:shadow-lg cursor-pointer transition border-l-4 border-blue-500 group">
+                <div onClick={() => navigate('/super-admin/universities')} className="bg-white p-6 rounded-lg shadow hover:shadow-lg cursor-pointer transition border-l-4 border-blue-500 group">
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition">Manage Schools</h3>
-                            <p className="text-sm text-gray-500 mt-1">Add, edit, or remove schools.</p>
+                            <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600 transition">Manage Universities</h3>
+                            <p className="text-sm text-gray-500 mt-1">Add, edit, or remove universities.</p>
                         </div>
                         <School className="text-gray-300 group-hover:text-blue-500 transition" />
                     </div>

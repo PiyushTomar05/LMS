@@ -37,9 +37,9 @@ const importUsers = async (req, res) => {
             return res.status(400).json({ message: 'Please upload an Excel file' });
         }
 
-        const { schoolId } = req.body;
-        if (!schoolId) {
-            return res.status(400).json({ message: 'School ID is required' });
+        const { universityId } = req.body;
+        if (!universityId) {
+            return res.status(400).json({ message: 'University ID is required' });
         }
 
         const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
@@ -62,7 +62,7 @@ const importUsers = async (req, res) => {
                     email: row.Email,
                     password: hashedPassword, // Default password
                     role: row.Role ? row.Role.toUpperCase() : 'STUDENT',
-                    schoolId: schoolId
+                    universityId: universityId
                 });
             }
         }
@@ -83,4 +83,28 @@ const importUsers = async (req, res) => {
     }
 };
 
-module.exports = { deleteUser, updateUser, importUsers };
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findById(req.user._id);
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { deleteUser, updateUser, importUsers, changePassword };

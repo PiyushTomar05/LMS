@@ -3,15 +3,22 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import SchoolAdminDashboard from './pages/SchoolAdminDashboard';
-import ManageSchools from './pages/ManageSchools';
+import UniversityAdminDashboard from './pages/UniversityAdminDashboard';
+import ManageUniversities from './pages/ManageUniversities';
 import ManageUsers from './pages/ManageUsers';
-import ManageClasses from './pages/ManageClasses';
-import TeacherDashboard from './pages/TeacherDashboard';
+import TimetableGenerator from './pages/TimetableGenerator';
+const ManageCourses = React.lazy(() => import('./pages/ManageCourses'));
+const ChangePassword = React.lazy(() => import('./pages/ChangePassword'));
+const AcademicManager = React.lazy(() => import('./pages/AcademicManager'));
 import StudentDashboard from './pages/StudentDashboard';
+import ProfessorDashboard from './pages/ProfessorDashboard';
+import LandingPage from './pages/LandingPage';
+// Messages removed
+import AcademicCalendar from './pages/AcademicCalendar';
 
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 const ProtectedRoute = ({ children }) => {
     const { isAuthenticated } = useAuth();
@@ -26,10 +33,11 @@ const RoleBasedDashboard = () => {
     switch (user.role) {
         case 'SUPER_ADMIN':
             return <SuperAdminDashboard />;
-        case 'SCHOOL_ADMIN':
-            return <SchoolAdminDashboard />;
-        case 'TEACHER':
-            return <TeacherDashboard />;
+        case 'UNIVERSITY_ADMIN':
+        case 'SCHOOL_ADMIN': // Handle both legacy and new role name
+            return <UniversityAdminDashboard />;
+        case 'PROFESSOR':
+            return <ProfessorDashboard />;
         case 'STUDENT':
             return <StudentDashboard />;
         default:
@@ -45,9 +53,11 @@ const RoleBasedDashboard = () => {
 function App() {
     return (
         <ErrorBoundary>
+            <Toaster position="top-right" />
             <Router>
                 <AuthProvider>
                     <Routes>
+                        <Route path="/" element={<LandingPage />} />
                         <Route path="/login" element={<Login />} />
 
                         {/* Protected Routes wrapped in Layout */}
@@ -58,10 +68,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         >
-                            <Route path="/" element={<RoleBasedDashboard />} />
-                            <Route path="/super-admin/schools" element={<ManageSchools />} />
-                            <Route path="/school/users" element={<ManageUsers />} />
-                            <Route path="/school/classes" element={<ManageClasses />} />
+                            <Route path="/dashboard" element={<RoleBasedDashboard />} />
+                            <Route path="/super-admin/universities" element={<ManageUniversities />} />
+                            <Route path="/university/users" element={<ManageUsers />} />
+                            <Route path="/university/courses" element={<ManageCourses />} />
+                            <Route path="/university/timetable" element={<TimetableGenerator />} />
+                            <Route path="/university/academic" element={<AcademicManager />} />
+                            <Route path="/academic-calendar" element={<AcademicCalendar />} />
+                            <Route path="/users/change-password" element={<ChangePassword />} />
                         </Route>
                     </Routes>
                 </AuthProvider>

@@ -1,42 +1,42 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const User = require('./models/User');
-const School = require('./models/School');
+const University = require('./models/University');
 const connectDB = require('./config/db');
 
 const seedData = async () => {
     await connectDB();
     try {
         await User.deleteMany();
-        await School.deleteMany();
+        await University.deleteMany();
 
         // 1. Create Super Admin
         const adminUser = await User.create({
             firstName: 'Super',
             lastName: 'Admin',
-            email: 'admin@school.com',
+            email: 'admin@university.com',
             password: 'admin123',
             role: 'SUPER_ADMIN'
         });
         console.log('Super Admin Created:', adminUser.email);
 
-        // 2. Create a Demo School
-        const school = await School.create({
-            name: 'Greenwood High',
+        // 2. Create a Demo University
+        const university = await University.create({
+            name: 'Greenwood University',
             address: '123 Education Lane'
         });
-        console.log('School Created:', school.name);
+        console.log('University Created:', university.name);
 
-        // 3. Create School Admin
-        const schoolAdmin = await User.create({
-            firstName: 'Principal',
+        // 3. Create University Admin
+        const universityAdmin = await User.create({
+            firstName: 'Dean',
             lastName: 'Skinner',
-            email: 'principal@school.com',
-            password: 'school123',
-            role: 'SCHOOL_ADMIN',
-            schoolId: school._id
+            email: 'dean@university.com',
+            password: 'university123',
+            role: 'UNIVERSITY_ADMIN',
+            universityId: university._id
         });
-        console.log('School Admin Created:', schoolAdmin.email);
+        console.log('University Admin Created:', universityAdmin.email);
 
         process.exit();
     } catch (error) {

@@ -15,7 +15,7 @@ const Login = () => {
     // Redirect if already logged in
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/', { replace: true });
+            navigate('/dashboard', { replace: true });
         }
     }, [isAuthenticated, navigate]);
 
@@ -36,39 +36,35 @@ const Login = () => {
     };
 
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 overflow-hidden relative">
-            {/* Background Decorative Elements */}
-            <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[100px]" />
-            <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[100px]" />
-
-            <div className="z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10">
+        <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+            <div className="z-10 w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-slate-200">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="p-3 bg-blue-600 rounded-xl shadow-lg mb-4">
+                    <div className="p-3 bg-primary-600 rounded-xl shadow-lg shadow-primary-500/30 mb-4">
                         <GraduationCap className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Welcome Back</h2>
-                    <p className="text-blue-200 mt-2 text-sm">Sign in to your LMS account</p>
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
+                    <p className="text-slate-500 mt-2 text-sm font-medium">Sign in to your EduManager account</p>
                 </div>
 
                 {error && (
-                    <div className="mb-6 p-4 text-sm text-red-100 bg-red-500/20 border border-red-500/30 rounded-lg flex items-center shadow-sm">
-                        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 mr-2 text-red-200"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <div className="mb-6 p-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl flex items-center shadow-sm">
+                        <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 mr-2 text-red-500"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-blue-200 uppercase tracking-wider ml-1">Email Address</label>
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">Email Address</label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-blue-300 group-focus-within:text-blue-400 transition-colors" />
+                                <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
                             </div>
                             <input
                                 type="email"
                                 required
-                                className="block w-full pl-10 pr-3 py-3 border border-slate-600 rounded-xl leading-5 bg-slate-800/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-800/80 transition-all duration-200 sm:text-sm"
-                                placeholder="name@school.com"
+                                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
+                                placeholder="name@university.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
@@ -76,15 +72,15 @@ const Login = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-blue-200 uppercase tracking-wider ml-1">Password</label>
+                        <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">Password</label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Lock className="h-5 w-5 text-blue-300 group-focus-within:text-blue-400 transition-colors" />
+                                <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
                             </div>
                             <input
                                 type="password"
                                 required
-                                className="block w-full pl-10 pr-3 py-3 border border-slate-600 rounded-xl leading-5 bg-slate-800/50 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-slate-800/80 transition-all duration-200 sm:text-sm"
+                                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -96,9 +92,9 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white transition-all duration-200 ${isLoading
-                                ? 'bg-blue-600/50 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:-translate-y-0.5'
+                            className={`w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-primary-500/20 text-sm font-bold text-white transition-all duration-200 ${isLoading
+                                ? 'bg-primary-400 cursor-not-allowed'
+                                : 'bg-primary-600 hover:bg-primary-700 hover:shadow-primary-500/40 hover:-translate-y-0.5 active:translate-y-0'
                                 }`}
                         >
                             {isLoading ? (
@@ -113,9 +109,9 @@ const Login = () => {
                     </div>
                 </form>
 
-                <div className="mt-8 text-center">
-                    <p className="text-xs text-slate-400">
-                        Default: <span className="text-slate-300 font-mono">admin@school.com</span> / <span className="text-slate-300 font-mono">admin123</span>
+                <div className="mt-8 text-center bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <p className="text-xs text-slate-500">
+                        Default: <span className="text-primary-700 font-bold font-mono">dean@university.com</span> / <span className="text-primary-700 font-bold font-mono">123456</span>
                     </p>
                 </div>
             </div>

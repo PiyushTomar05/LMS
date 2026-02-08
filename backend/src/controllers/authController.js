@@ -22,7 +22,8 @@ const loginUser = async (req, res) => {
                     lastName: user.lastName,
                     email: user.email,
                     role: user.role,
-                    schoolId: user.schoolId
+                    role: user.role,
+                    universityId: user.universityId
                 },
             });
         } else {
@@ -33,9 +34,24 @@ const loginUser = async (req, res) => {
     }
 };
 
+// Helper to generate URN
+const generateURN = async () => {
+    const year = new Date().getFullYear();
+    const count = await User.countDocuments({ role: 'STUDENT', urn: { $regex: `^URN-${year}` } });
+    const sequence = String(count + 1).padStart(4, '0');
+    return `URN-${year}-${sequence}`;
+};
+
+// Helper to generate Faculty ID
+const generateFacultyID = async () => {
+    const year = new Date().getFullYear();
+    const count = await User.countDocuments({ role: 'PROFESSOR', facultyId: { $regex: `^FAC-${year}` } });
+    const sequence = String(count + 1).padStart(4, '0');
+    return `FAC-${year}-${sequence}`;
+};
+
 const registerUser = async (req, res) => {
-    // Basic registration for testing/seeding
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role, universityId, department, program, dob, gender, contactNumber, address, guardian } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -44,12 +60,34 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        let urn = null;
+        if (role === 'STUDENT') {
+            urn = await generateURN();
+        }
+
         const user = await User.create({
             firstName,
             lastName,
             email,
             password,
-            role: role || 'STUDENT'
+            role: role || 'STUDENT',
+            universityId,
+            // SIS Fields
+            urn,
+            department,
+            program,
+            dob,
+            gender,
+            contactNumber,
+            address,
+            guardian,
+            // Faculty Fields
+            facultyId: role === 'PROFESSOR' ? await generateFacultyID() : undefined,
+            designation: role === 'PROFESSOR' ? req.body.designation : undefined,
+            qualification: role === 'PROFESSOR' ? req.body.qualification : undefined,
+            specialization: role === 'PROFESSOR' ? req.body.specialization : undefined,
+            employmentType: role === 'PROFESSOR' ? req.body.employmentType : undefined,
+            joiningDate: role === 'PROFESSOR' ? new Date() : undefined
         });
 
         if (user) {
@@ -58,6 +96,7 @@ const registerUser = async (req, res) => {
                 firstName: user.firstName,
                 email: user.email,
                 role: user.role,
+                urn: user.urn,
                 token: generateToken(user._id),
             });
         } else {
@@ -68,14 +107,14 @@ const registerUser = async (req, res) => {
     }
 };
 
-const getUsersBySchool = async (req, res) => {
+const getUsersByUniversity = async (req, res) => {
     try {
-        const { schoolId } = req.params;
-        const users = await User.find({ schoolId }).select('-password');
+        const { universityId } = req.params;
+        const users = await User.find({ universityId }).select('-password');
         res.json(users);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-module.exports = { loginUser, registerUser, getUsersBySchool };
+module.exports = { loginUser, registerUser, getUsersByUniversity };
