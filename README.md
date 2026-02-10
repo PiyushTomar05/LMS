@@ -21,8 +21,8 @@ A comprehensive, multi-tenant Learning Management System designed for universiti
 
 *   **Frontend**: React, Vite, Tailwind CSS
 *   **Backend**: Node.js, Express.js
-*   **Database**: PostgreSQL
-*   **ORM**: Prisma
+*   **Database**: MongoDB
+*   **ODM**: Mongoose
 *   **Authentication**: JWT (JSON Web Tokens)
 
 ## Prerequisites
@@ -31,7 +31,7 @@ Before getting started, ensure you have the following installed:
 
 *   **Node.js** (v14 or higher)
 *   **npm** (Node Package Manager)
-*   **PostgreSQL** (Running instance)
+*   **MongoDB** (Local instance or Atlas connection string)
 
 ## Getting Started
 
@@ -49,12 +49,12 @@ cd backend
 npm install
 ```
 
-Create a `.env` file in the `backend` directory with your configuration (Database URL, JWT Secret, etc.).
+Create a `.env` file in the `backend` directory with your configuration (`MONGO_URI`, `JWT_SECRET`, etc.).
 
-Run database migrations:
+Seed the database with initial data:
 
 ```bash
-npx prisma migrate dev
+npm run seed
 ```
 
 Start the backend server:

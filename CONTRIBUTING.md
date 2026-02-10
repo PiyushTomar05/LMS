@@ -49,6 +49,15 @@ git push origin feature/your-feature-name
 
 Go to the original repository on GitHub and open a Pull Request (PR) from your forked branch. Provide a clear description of your changes.
 
+## Project Structure
+
+The project is divided into two main folders:
+
+- **`backend/`**: Contains the Node.js/Express server, Mongoose models, and API routes.
+- **`frontend/`**: Contains the React application (Vite), components, and pages.
+
+Please ensure your changes are made in the appropriate directory.
+
 ## Code Style
 
 - Follow standard JavaScript/React coding conventions.
