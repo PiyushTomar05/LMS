@@ -25,12 +25,60 @@ A comprehensive, multi-tenant Learning Management System designed for universiti
 *   **ORM**: Prisma
 *   **Authentication**: JWT (JSON Web Tokens)
 
+## Prerequisites
+
+Before getting started, ensure you have the following installed:
+
+*   **Node.js** (v14 or higher)
+*   **npm** (Node Package Manager)
+*   **PostgreSQL** (Running instance)
+
 ## Getting Started
 
-1.  Clone the repository.
-2.  Install dependencies for backend: `cd backend && npm install`
-3.  Install dependencies for frontend: `cd frontend && npm install`
-4.  Set up your `.env` file in the `backend` directory.
-5.  Run database migrations: `npx prisma migrate dev`
-6.  Start the backend: `npm run dev`
-7.  Start the frontend: `npm run dev`
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/PiyushTomar05/LMS.git
+cd LMS
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the `backend` directory with your configuration (Database URL, JWT Secret, etc.).
+
+Run database migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+Start the backend server:
+
+```bash
+npm run dev
+```
+
+### 3. Frontend Setup
+
+Open a new terminal and navigate to the `frontend` directory:
+
+```bash
+cd frontend
+npm install
+```
+
+Start the frontend development server:
+
+```bash
+npm run dev
+```
+
+## Project Structure
+
+*   `backend/`: Contains the Node.js/Express application, API routes, and database models.
+*   `frontend/`: Contains the React application, components, and pages.
