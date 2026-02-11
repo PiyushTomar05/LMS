@@ -2,6 +2,7 @@ const User = require('../models/User');
 const xlsx = require('xlsx');
 const bcrypt = require('bcryptjs');
 const { validateProgramDepartment } = require('../utils/validation');
+const { logAction } = require('../utils/logger');
 
 
 // @desc    Delete user
@@ -10,8 +11,75 @@ const { validateProgramDepartment } = require('../utils/validation');
 const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        await User.findByIdAndDelete(id);
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        // Log Delete
+        if (deletedUser) {
+            await logAction('DELETE_USER', { id: req.user?._id, role: 'ADMIN' }, `Deleted User: ${deletedUser.email}`, { deletedUserId: id }, 'SUCCESS');
+        }
+
         res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ... importUsers ... 
+
+if (newUsers.length > 0) {
+    await User.insertMany(newUsers);
+    fs.appendFileSync(debugLogPath, `Successfully inserted ${newUsers.length} users.\n`);
+} else {
+    fs.appendFileSync(debugLogPath, `All users were duplicates. No new users inserted.\n`);
+}
+
+// Log Import
+await logAction('IMPORT', { id: req.user?._id, role: 'ADMIN' }, `Bulk Import: ${newUsers.length} users`, {
+    totalRows: usersToCreate.length,
+    imported: newUsers.length,
+    duplicates: existingEmails.length
+}, 'SUCCESS');
+
+res.status(200).json({
+    message: `Processed ${usersToCreate.length} rows. Imported ${newUsers.length} new users. Skipped ${existingEmails.length} duplicates.`
+});
+
+// ... deleteSelectedUsers ...
+
+const deleteSelectedUsers = async (req, res) => {
+    try {
+        const { userIds, universityId } = req.body;
+        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+            return res.status(400).json({ message: 'No users selected' });
+        }
+        await User.deleteMany({ _id: { $in: userIds }, universityId });
+
+        // Log Bulk Delete
+        await logAction('DELETE_BULK', { id: req.user?._id, role: 'ADMIN' }, `Deleted ${userIds.length} users`, { userIds }, 'SUCCESS');
+
+        res.json({ message: `Successfully deleted ${userIds.length} users.` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// ... deleteAllUsersByRole ...
+
+const deleteAllUsersByRole = async (req, res) => {
+    try {
+        const { universityId } = req.body;
+        const { role } = req.params;
+
+        if (!['STUDENT', 'PROFESSOR', 'STAFF'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+
+        const result = await User.deleteMany({ universityId, role });
+
+        // Log Bulk Delete by Role
+        await logAction('DELETE_BULK', { id: req.user?._id, role: 'ADMIN' }, `Deleted All ${role}s`, { deletedCount: result.deletedCount }, 'SUCCESS');
+
+        res.json({ message: `Successfully deleted ${result.deletedCount} ${role.toLowerCase()}s.` });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -310,40 +378,7 @@ const deleteAllStudents = async (req, res) => {
     }
 };
 
-// @desc    Delete selected users
-// @route   POST /users/delete-selected
-// @access  School Admin
-const deleteSelectedUsers = async (req, res) => {
-    try {
-        const { userIds, universityId } = req.body;
-        if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-            return res.status(400).json({ message: 'No users selected' });
-        }
-        await User.deleteMany({ _id: { $in: userIds }, universityId });
-        res.json({ message: `Successfully deleted ${userIds.length} users.` });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
-// @desc    Delete all users by role
-// @route   DELETE /users/delete-all/:role
-// @access  School Admin
-const deleteAllUsersByRole = async (req, res) => {
-    try {
-        const { universityId } = req.body;
-        const { role } = req.params;
-
-        if (!['STUDENT', 'PROFESSOR', 'STAFF'].includes(role)) {
-            return res.status(400).json({ message: 'Invalid role' });
-        }
-
-        const result = await User.deleteMany({ universityId, role });
-        res.json({ message: `Successfully deleted ${result.deletedCount} ${role.toLowerCase()}s.` });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
 module.exports = { deleteUser, updateUser, importUsers, changePassword, deleteAllStudents, deleteSelectedUsers, deleteAllUsersByRole };
 

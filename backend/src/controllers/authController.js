@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { validateProgramDepartment } = require('../utils/validation');
+const { logAction } = require('../utils/logger');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -15,6 +16,9 @@ const loginUser = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
+            // Log Success
+            await logAction('LOGIN', { id: user._id, email: user.email, role: user.role, ip: req.ip }, 'User Login', {}, 'SUCCESS');
+
             res.json({
                 access_token: generateToken(user._id),
                 user: {
@@ -23,11 +27,12 @@ const loginUser = async (req, res) => {
                     lastName: user.lastName,
                     email: user.email,
                     role: user.role,
-                    role: user.role,
                     universityId: user.universityId
                 },
             });
         } else {
+            // Log Failure
+            await logAction('LOGIN', { email, ip: req.ip }, 'User Login', { reason: 'Invalid Credentials' }, 'FAILURE');
             res.status(401).json({ message: 'Invalid email or password' });
         }
     } catch (error) {
@@ -78,6 +83,10 @@ const registerUser = async (req, res) => {
 
         if (role && role !== 'STUDENT') {
             console.warn(`[SECURITY] Attempted Role Spoofing: Email ${email} tried to register as ${role}`);
+
+            // Log Security Alert
+            await logAction('SECURITY_ALERT', { email, ip: req.ip }, 'Role Spoofing Attempt', { requestedRole: role }, 'WARNING');
+
             // We can strictly reject or just silently force STUDENT. 
             // Rejecting is safer to signal to the hacker that we know.
             return res.status(403).json({ message: "Public registration is restricted to Students only." });
@@ -131,6 +140,8 @@ const registerUser = async (req, res) => {
         });
 
         if (user) {
+            await logAction('REGISTER', { id: user._id, email: user.email, role: user.role, ip: req.ip }, 'New User Registration', {}, 'SUCCESS');
+
             res.status(201).json({
                 _id: user._id,
                 firstName: user.firstName,
