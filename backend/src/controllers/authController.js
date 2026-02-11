@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { validateProgramDepartment } = require('../utils/validation');
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -34,24 +35,34 @@ const loginUser = async (req, res) => {
     }
 };
 
-// Helper to generate URN
+const Counter = require('../models/Counter');
+
+// Helper to generate URN (Atomic)
 const generateURN = async () => {
     const year = new Date().getFullYear();
-    const count = await User.countDocuments({ role: 'STUDENT', urn: { $regex: `^URN-${year}` } });
-    const sequence = String(count + 1).padStart(4, '0');
+    const counter = await Counter.findByIdAndUpdate(
+        { _id: `urn_${year}` },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+    );
+    const sequence = String(counter.seq).padStart(4, '0');
     return `URN-${year}-${sequence}`;
 };
 
-// Helper to generate Faculty ID
+// Helper to generate Faculty ID (Atomic)
 const generateFacultyID = async () => {
     const year = new Date().getFullYear();
-    const count = await User.countDocuments({ role: 'PROFESSOR', facultyId: { $regex: `^FAC-${year}` } });
-    const sequence = String(count + 1).padStart(4, '0');
+    const counter = await Counter.findByIdAndUpdate(
+        { _id: `faculty_${year}` },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+    );
+    const sequence = String(counter.seq).padStart(4, '0');
     return `FAC-${year}-${sequence}`;
 };
 
 const registerUser = async (req, res) => {
-    const { firstName, lastName, email, password, role, universityId, department, program, dob, gender, contactNumber, address, guardian } = req.body;
+    const { firstName, lastName, email, password, role, universityId, department, program, semester, academicYear, dob, gender, contactNumber, address, guardian } = req.body;
 
     try {
         const userExists = await User.findOne({ email });
@@ -60,8 +71,35 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
+        // Critical Security Fix: Prevent Privilege Escalation
+        // Public Registration is STRICTLY for Students.
+        // Faculty/Admin creation must be done via protected Admin routes.
+        const finalRole = 'STUDENT';
+
+        if (role && role !== 'STUDENT') {
+            console.warn(`[SECURITY] Attempted Role Spoofing: Email ${email} tried to register as ${role}`);
+            // We can strictly reject or just silently force STUDENT. 
+            // Rejecting is safer to signal to the hacker that we know.
+            return res.status(403).json({ message: "Public registration is restricted to Students only." });
+        }
+
+
+        // Valication for Students
+        if (finalRole === 'STUDENT') {
+            if (!department || !program || !semester || !academicYear) {
+                return res.status(400).json({ message: "Student admission requires Department, Program, Semester, and Academic Year." });
+            }
+
+            // Strict Program-Department Mapping Check
+            if (!validateProgramDepartment(program, department)) {
+                return res.status(400).json({
+                    message: `Invalid Department '${department}' for Program '${program}'. Allowed departments are strictly mapped.`
+                });
+            }
+        }
+
         let urn = null;
-        if (role === 'STUDENT') {
+        if (finalRole === 'STUDENT') {
             urn = await generateURN();
         }
 
@@ -70,24 +108,26 @@ const registerUser = async (req, res) => {
             lastName,
             email,
             password,
-            role: role || 'STUDENT',
+            role: finalRole,
             universityId,
             // SIS Fields
             urn,
             department,
             program,
+            semester,
+            academicYear,
             dob,
             gender,
             contactNumber,
             address,
             guardian,
             // Faculty Fields
-            facultyId: role === 'PROFESSOR' ? await generateFacultyID() : undefined,
-            designation: role === 'PROFESSOR' ? req.body.designation : undefined,
-            qualification: role === 'PROFESSOR' ? req.body.qualification : undefined,
-            specialization: role === 'PROFESSOR' ? req.body.specialization : undefined,
-            employmentType: role === 'PROFESSOR' ? req.body.employmentType : undefined,
-            joiningDate: role === 'PROFESSOR' ? new Date() : undefined
+            facultyId: finalRole === 'PROFESSOR' ? await generateFacultyID() : undefined,
+            designation: finalRole === 'PROFESSOR' ? req.body.designation : undefined,
+            qualification: finalRole === 'PROFESSOR' ? req.body.qualification : undefined,
+            specialization: finalRole === 'PROFESSOR' ? req.body.specialization : undefined,
+            employmentType: finalRole === 'PROFESSOR' ? req.body.employmentType : undefined,
+            joiningDate: finalRole === 'PROFESSOR' ? new Date() : undefined
         });
 
         if (user) {
