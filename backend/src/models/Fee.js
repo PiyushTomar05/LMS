@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
 const FeeStructureSchema = new mongoose.Schema({
-    universityId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
+    universityId: { type: mongoose.Schema.Types.ObjectId, ref: 'University', required: true }, // Changed ref to University
     name: { type: String, required: true }, // e.g., "B.Tech CSE - Year 1 (2024)"
     description: String,
+    academicYear: { type: String, required: true },
+    semester: { type: String, required: true }, // Added semester
 
     // Breakdown
     tuitionFee: { type: Number, default: 0 },
@@ -20,11 +22,13 @@ const FeeStructureSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const FeePaymentSchema = new mongoose.Schema({
-    universityId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
+    universityId: { type: mongoose.Schema.Types.ObjectId, ref: 'University', required: true },
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     feeStructureId: { type: mongoose.Schema.Types.ObjectId, ref: 'FeeStructure', required: true },
 
-    totalPayable: { type: Number, required: true }, // Copy of FeeStructure.totalAmount (snapshot)
+    invoiceNumber: { type: String, unique: true }, // Added invoice number
+
+    totalPayable: { type: Number, required: true },
     paidAmount: { type: Number, default: 0 },
     remainingAmount: { type: Number, required: true },
 
@@ -42,6 +46,15 @@ const FeePaymentSchema = new mongoose.Schema({
         remarks: String
     }]
 }, { timestamps: true });
+
+// Pre-save hook to generate invoice number
+FeePaymentSchema.pre('save', async function (next) {
+    if (!this.invoiceNumber) {
+        const count = await this.constructor.countDocuments();
+        this.invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(6, '0')}`;
+    }
+    next();
+});
 
 const FeeStructure = mongoose.model('FeeStructure', FeeStructureSchema);
 const FeePayment = mongoose.model('FeePayment', FeePaymentSchema);

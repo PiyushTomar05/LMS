@@ -10,11 +10,15 @@ import TimetableGenerator from './pages/TimetableGenerator';
 const ManageCourses = React.lazy(() => import('./pages/ManageCourses'));
 const ChangePassword = React.lazy(() => import('./pages/ChangePassword'));
 const AcademicManager = React.lazy(() => import('./pages/AcademicManager'));
+const ExamManager = React.lazy(() => import('./pages/ExamManager'));
+const FeeManager = React.lazy(() => import('./pages/FeeManager'));
+const FeePortal = React.lazy(() => import('./pages/FeePortal'));
+const AcademicCalendar = React.lazy(() => import('./pages/AcademicCalendar'));
 import StudentDashboard from './pages/StudentDashboard';
 import ProfessorDashboard from './pages/ProfessorDashboard';
 import LandingPage from './pages/LandingPage';
 // Messages removed
-import AcademicCalendar from './pages/AcademicCalendar';
+
 
 import Layout from './components/Layout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -74,7 +78,10 @@ function App() {
                             <Route path="/university/courses" element={<ManageCourses />} />
                             <Route path="/university/timetable" element={<TimetableGenerator />} />
                             <Route path="/university/academic" element={<AcademicManager />} />
+                            <Route path="/university/exams" element={<ExamManager />} />
+                            <Route path="/university/fees" element={<FeeManager />} />
                             <Route path="/academic-calendar" element={<AcademicCalendar />} />
+                            <Route path="/student/fees" element={<FeePortal />} />
                             <Route path="/users/change-password" element={<ChangePassword />} />
                         </Route>
                     </Routes>

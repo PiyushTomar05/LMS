@@ -5,6 +5,15 @@ const courseSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    code: { // Added Course Code (e.g., CS101)
+        type: String,
+        required: true
+    },
+    credits: { // Added Credits
+        type: Number,
+        required: true,
+        default: 4
+    },
     section: {
         type: String, // e.g. "A", "B"
         default: "A"
@@ -46,6 +55,10 @@ const courseSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
+    prerequisites: [{ // Added Prerequisites
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course'
+    }],
     schedule: [{
         day: {
             type: String,
@@ -58,6 +71,9 @@ const courseSchema = mongoose.Schema({
 }, {
     timestamps: true,
 });
+
+// Compound index to prevent duplicate courses (Same code in same uni)
+courseSchema.index({ universityId: 1, code: 1, section: 1 }, { unique: true });
 
 const Course = mongoose.model('Course', courseSchema);
 

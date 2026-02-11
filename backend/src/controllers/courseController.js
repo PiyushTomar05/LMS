@@ -5,7 +5,7 @@ const Course = require('../models/Course');
 // @access  University Admin
 const createCourse = async (req, res) => {
     try {
-        const { name, universityId, schedule } = req.body;
+        const { name, code, credits, prerequisites, universityId, schedule } = req.body;
 
         // Simple validation: Ensure universityId is required
         if (!universityId) {
@@ -14,6 +14,10 @@ const createCourse = async (req, res) => {
 
         const newCourse = await Course.create({
             name,
+            code,
+            credits,
+            section: req.body.section || 'A', // Default to A
+            prerequisites,
             universityId,
             schedule // Optional
         });

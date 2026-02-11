@@ -12,6 +12,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Rate Limiting (Global)
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+});
+app.use(limiter);
+
+// Auth Specific Limiter (Stricter)
+const authLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 10, // 10 Login attempts per hour
+    message: 'Too many login attempts, please try again later.'
+});
+app.use('/auth/login', authLimiter);
+
+
 // Database Connection
 // Database Connection
 connectDB();
@@ -33,6 +51,9 @@ app.use('/calendar', require('./routes/calendarRoutes'));
 app.use('/fees', require('./routes/feeRoutes'));
 app.use('/academic', require('./routes/academicRoutes'));
 app.use('/grades', require('./routes/gradeRoutes'));
+app.use('/exams', require('./routes/examRoutes'));
+app.use('/reports', require('./routes/reportRoutes')); // Added Reports
+
 
 const http = require('http');
 const { Server } = require('socket.io');

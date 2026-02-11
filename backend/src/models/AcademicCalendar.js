@@ -25,6 +25,11 @@ const calendarSchema = new mongoose.Schema({
     },
     description: {
         type: String
+    },
+    isBlocking: {
+        type: Boolean,
+        default: true,
+        description: "If true, prevents attendance marking and scheduling."
     }
 }, { timestamps: true });
 

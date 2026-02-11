@@ -1,13 +1,15 @@
 const AcademicCalendar = require('../models/AcademicCalendar');
 
-
 // Get all events for a university
 const getEvents = async (req, res) => {
     try {
-        const { universityId } = req.query; // Or from req.user
-        if (!universityId) return res.status(400).json({ message: 'University ID required' });
+        const { universityId } = req.query;
+        // Allow querying by universityId from query params OR from logged in user
+        const targetUnivId = universityId || (req.user ? req.user.universityId : null);
 
-        const events = await AcademicCalendar.find({ universityId }).sort({ startDate: 1 });
+        if (!targetUnivId) return res.status(400).json({ message: 'University ID required' });
+
+        const events = await AcademicCalendar.find({ universityId: targetUnivId }).sort({ startDate: 1 });
         res.json(events);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -17,15 +19,15 @@ const getEvents = async (req, res) => {
 // Add a new event
 const addEvent = async (req, res) => {
     try {
-        const { universityId, title, type, startDate, endDate, description } = req.body;
+        const { universityId, title, type, startDate, endDate, description, isBlocking } = req.body;
 
-        // Basic validation
         if (new Date(startDate) > new Date(endDate)) {
             return res.status(400).json({ message: 'Start date cannot be after end date' });
         }
 
         const event = await AcademicCalendar.create({
-            universityId, title, type, startDate, endDate, description
+            universityId: universityId || req.user.universityId,
+            title, type, startDate, endDate, description, isBlocking
         });
         res.status(201).json(event);
     } catch (error) {
@@ -43,16 +45,16 @@ const deleteEvent = async (req, res) => {
     }
 };
 
-// Internal helper to check if a date is a holiday
-const isHoliday = async (universityId, date) => {
+// Internal/External helper to check if a date is blocked (Holiday/Exam)
+const isDateBlocked = async (universityId, date) => {
     const targetDate = new Date(date);
-    const holiday = await AcademicCalendar.findOne({
+    const event = await AcademicCalendar.findOne({
         universityId,
-        type: 'Holiday',
+        isBlocking: true,
         startDate: { $lte: targetDate },
         endDate: { $gte: targetDate }
     });
-    return !!holiday;
+    return !!event;
 };
 
-module.exports = { getEvents, addEvent, deleteEvent, isHoliday };
+module.exports = { getEvents, addEvent, deleteEvent, isDateBlocked };

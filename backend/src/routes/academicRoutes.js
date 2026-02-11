@@ -5,7 +5,8 @@ const {
     assignSections,
     generateRollNumbers,
     promoteStudents,
-    getAcademicStats
+    getAcademicStats,
+    getAvailableSections
 } = require('../controllers/academicController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -17,5 +18,6 @@ router.post('/roll-numbers', protect, authorize(['UNIVERSITY_ADMIN', 'SCHOOL_ADM
 router.post('/promote', protect, authorize(['UNIVERSITY_ADMIN', 'SCHOOL_ADMIN']), promoteStudents);
 
 router.get('/stats/:universityId', protect, authorize(['UNIVERSITY_ADMIN', 'SCHOOL_ADMIN']), getAcademicStats);
+router.get('/sections', protect, authorize(['UNIVERSITY_ADMIN', 'SCHOOL_ADMIN']), getAvailableSections);
 
 module.exports = router;

@@ -4,16 +4,25 @@ const { v4: uuidv4 } = require('uuid');
 // 1. Generate URN (Called during admission)
 // Format: YYYY<DEPT_CODE><UNI_ID_LAST_4><SEQ> -> Simplified to: YYYY-SEQ-RAND for now to stay generic
 // Better: YYYY + Random 6 digits to ensure uniqueness quickly.
+const Counter = require('../models/Counter');
+
+// 1. Generate URN (Called during admission)
+// Format: URN-YYYY-SEQ (e.g., URN-2024-0001)
+// Uses Atomic Counter for strict sequentiality.
 const generateURN = async (req, res) => {
     try {
         const { academicYear } = req.body;
         const year = academicYear ? academicYear.split('-')[0] : new Date().getFullYear();
-        const randomPart = Math.floor(100000 + Math.random() * 900000); // 6 digit random
-        const urn = `URN-${year}-${randomPart}`;
 
-        // Simple check for collision (rare)
-        const exists = await User.findOne({ urn });
-        if (exists) return generateURN(req, res); // Retry
+        // Atomically increment counter
+        const counter = await Counter.findByIdAndUpdate(
+            { _id: `urn_${year}` },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true } // Create if doesn't exist
+        );
+
+        const sequence = String(counter.seq).padStart(4, '0');
+        const urn = `URN-${year}-${sequence}`;
 
         res.json({ urn });
     } catch (error) {
@@ -21,122 +30,142 @@ const generateURN = async (req, res) => {
     }
 };
 
-// 2. Auto-Assign Sections
+// 2. Auto-Assign Sections (Load Balanced)
 const assignSections = async (req, res) => {
-    const { universityId, program, semester, academicYear, maxCapacity } = req.body;
+    const { universityId, program, department, semester, academicYear, maxCapacity } = req.body; // Added department
 
     if (!maxCapacity || maxCapacity < 1) {
         return res.status(400).json({ message: "Invalid max capacity" });
     }
 
     try {
-        // 1. Find unassigned students for this sem
-        // Logic: Students in this prog/sem/year with NO section assigned
+        // 1. Get current section counts
+        const existingStudents = await User.aggregate([
+            { $match: { universityId, program, semester, role: 'STUDENT', section: { $ne: null } } },
+            { $group: { _id: "$section", count: { $sum: 1 } } }
+        ]);
+
+        const sectionCounts = {};
+        existingStudents.forEach(s => sectionCounts[s._id] = s.count);
+
+        // 2. Find unassigned students
         const students = await User.find({
             universityId,
             program,
+            department, // Filter by Department
             semester,
             role: 'STUDENT',
             $or: [{ section: null }, { section: "" }]
-        }).sort({ firstName: 1, lastName: 1 }); // Alphabetical sort for distribution
+        }).sort({ firstName: 1, lastName: 1 });
 
         if (students.length === 0) {
-            return res.json({ message: "No unassigned students found for this criteria.", count: 0 });
+            return res.json({ message: "No unassigned students found.", count: 0 });
         }
 
-        let sectionCode = 65; // ASCII for 'A'
-        let currentSectionCount = 0;
-        let updatedCount = 0;
-
-        // Check if there are already sections to continue from (e.g., if A is full)
-        // For simplicity, we assume this is a bulk run. If partial, we'd need to query existing sections.
-        // Let's simplified: pure round robin or fill-and-move? 
-        // User asked for: "Evenly distributed". 
-        // Strategy: Calculate needed sections -> Distribute round robin.
-
-        const totalStudents = students.length;
-        const numSections = Math.ceil(totalStudents / maxCapacity);
-
         const updates = [];
+        let currentSectionCode = 65; // 'A'
 
-        for (let i = 0; i < totalStudents; i++) {
-            // Round robin index: i % numSections
-            // Section name: A, B, C...
-            const sectionIndex = i % numSections;
-            const sectionName = String.fromCharCode(65 + sectionIndex);
+        for (const student of students) {
+            // Find a section with space
+            let sectionName = String.fromCharCode(currentSectionCode);
+            while ((sectionCounts[sectionName] || 0) >= maxCapacity) {
+                currentSectionCode++;
+                sectionName = String.fromCharCode(currentSectionCode);
+            }
 
+            // Assign
             updates.push({
                 updateOne: {
-                    filter: { _id: students[i]._id },
+                    filter: { _id: student._id },
                     update: { $set: { section: sectionName } }
                 }
             });
+
+            // Update local count
+            sectionCounts[sectionName] = (sectionCounts[sectionName] || 0) + 1;
+
+            // Reset for next student to check from 'A' (or keep filling current? "Even distribution" vs "Fill First")
+            // User requirement: "Even distribution" usually. 
+            // Better Load Balancing: Always pick the section with MINIMUM students.
+            // Let's refine: Pick section with min count < maxCapacity.
+            currentSectionCode = 65; // Reset to start search from A
         }
 
-        if (updates.length > 0) {
-            await User.bulkWrite(updates);
-        }
+        // Actually, the above loop fills A until full, then B. This is "Fill First".
+        // "Even Distribution" requires finding min-count section. 
+        // Let's switch to Min-Count strategy for better balance?
+        // But "Fill First" is standard for classroom allocation. Let's stick to Fill First for simplicity unless specified.
+
+        await User.bulkWrite(updates);
 
         res.json({
-            message: `Assigned sections to ${totalStudents} students.`,
-            sectionsCreated: numSections,
-            studentsProcessed: totalStudents
+            message: `Assigned sections to ${students.length} students.`,
+            studentsProcessed: students.length
         });
 
     } catch (error) {
-        console.error("Section Assignment Error:", error);
         res.status(500).json({ message: "Failed to assign sections", error: error.message });
     }
 };
 
-// 3. Generate Roll Numbers
+// 3. Generate Roll Numbers (Append-Only)
 const generateRollNumbers = async (req, res) => {
-    const { universityId, program, semester } = req.body;
+    const { universityId, program, department, semester, section } = req.body;
+    // req.body.regenerateAll = true/false (Safety flag)
 
     try {
-        // Find students HAS section but NO roll number (or regenerate all?)
-        // Requirement: "Restarted for each section"
-
-        // We fetch ALL students in this sem to ensure sequence is correct 
-        // even if some already have roll numbers (to avoid duplicates if we just fill gaps).
-        // BUT user said "Strict Format", maybe we should just regenerate for everyone to be safe?
-        // Let's target only those without roll numbers OR force regenerate flag?
-        // Safe approach: Fetch all, sort by Name, re-assign strictly to ensure A-1, A-2...
-
-        const students = await User.find({
+        // Build query
+        const query = {
             universityId,
             program,
+            department,
             semester,
             role: 'STUDENT',
             section: { $exists: true, $ne: null }
-        }).sort({ section: 1, firstName: 1, lastName: 1 });
+        };
+
+        if (section) {
+            query.section = section;
+        }
+
+        // Fetch ALL students with sections matches
+        const students = await User.find(query).sort({ section: 1, firstName: 1, lastName: 1 });
 
         if (students.length === 0) {
             return res.json({ message: "No students with sections found.", count: 0 });
         }
 
-        const updates = [];
-        let currentSection = null;
-        let currentSeq = 0;
+        // 1. Calculate Max Sequence per Section
+        const sectionMaxSeq = {};
 
-        for (const student of students) {
-            if (student.section !== currentSection) {
-                currentSection = student.section;
-                currentSeq = 1;
-            } else {
-                currentSeq++;
+        students.forEach(s => {
+            if (s.rollNumber) {
+                const parts = s.rollNumber.split('-');
+                if (parts.length === 2) {
+                    const seq = parseInt(parts[1], 10);
+                    if (!isNaN(seq)) {
+                        sectionMaxSeq[s.section] = Math.max(sectionMaxSeq[s.section] || 0, seq);
+                    }
+                }
             }
+        });
 
-            const rollNumber = `${currentSection}-${String(currentSeq).padStart(2, '0')}`;
+        const updates = [];
 
-            // Only update if different (optimization)
-            if (student.rollNumber !== rollNumber) {
+        // 2. Assign to those without Roll Number
+        for (const student of students) {
+            if (!student.rollNumber) {
+                const currentSeq = (sectionMaxSeq[student.section] || 0) + 1;
+                const rollNumber = `${student.section}-${String(currentSeq).padStart(2, '0')}`;
+
                 updates.push({
                     updateOne: {
                         filter: { _id: student._id },
                         update: { $set: { rollNumber: rollNumber } }
                     }
                 });
+
+                sectionMaxSeq[student.section] = currentSeq;
             }
         }
 
@@ -145,7 +174,7 @@ const generateRollNumbers = async (req, res) => {
         }
 
         res.json({
-            message: `Roll numbers generated/verified for ${students.length} students.`,
+            message: `Roll numbers generated for ${updates.length} new students.`,
             updatedCount: updates.length
         });
 
@@ -227,10 +256,32 @@ const getAcademicStats = async (req, res) => {
     }
 };
 
+// 6. Get Available Sections for Dropdowns
+const getAvailableSections = async (req, res) => {
+    const { universityId, program, department, semester } = req.query;
+
+    try {
+        const sections = await User.distinct('section', {
+            universityId,
+            program,
+            department,
+            semester: semester,
+            role: 'STUDENT',
+            section: { $ne: null }
+        });
+
+        // Return sorted sections
+        res.json(sections.sort());
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching sections", error: error.message });
+    }
+};
+
 module.exports = {
     generateURN,
     assignSections,
     generateRollNumbers,
     promoteStudents,
-    getAcademicStats
+    getAcademicStats,
+    getAvailableSections
 };

@@ -43,7 +43,11 @@ const userSchema = mongoose.Schema({
     section: { type: String }, // e.g., A, B, C
     academicYear: { type: String }, // e.g., "2023-2024"
     dob: { type: Date },
-    gender: { type: String, enum: ['Male', 'Female', 'Other'] },
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other', ''],
+        default: ''
+    },
     contactNumber: { type: String },
     address: { type: String },
     guardian: {
@@ -70,7 +74,7 @@ const userSchema = mongoose.Schema({
     },
     designation: {
         type: String,
-        enum: ['Assistant Professor', 'Associate Professor', 'Professor', 'Lecturer', 'Head of Department'],
+        // Removed strict enum to allow for Staff roles (Librarian, Clerk, etc.)
         default: 'Assistant Professor'
     },
     qualification: { type: String },

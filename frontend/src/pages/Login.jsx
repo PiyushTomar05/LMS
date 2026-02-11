@@ -111,7 +111,7 @@ const Login = () => {
 
                 <div className="mt-8 text-center bg-slate-50 p-3 rounded-lg border border-slate-100">
                     <p className="text-xs text-slate-500">
-                        Default: <span className="text-primary-700 font-bold font-mono">dean@university.com</span> / <span className="text-primary-700 font-bold font-mono">123456</span>
+                        Default: <span className="text-primary-700 font-bold font-mono">dean@university.com</span> / <span className="text-primary-700 font-bold font-mono">university123</span>
                     </p>
                 </div>
             </div>
