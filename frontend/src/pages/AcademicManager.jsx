@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Users, BookOpen, Layers, Award, Hash, CheckCircle, RefreshCcw, AlertCircle } from 'lucide-react';
+import {
+    Users, BookOpen, Layers, Award, Hash, CheckCircle, RefreshCcw, AlertCircle,
+    ArrowRight, PieChart, GraduationCap, School
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const AcademicManager = () => {
@@ -9,11 +12,16 @@ const AcademicManager = () => {
     const [activeTab, setActiveTab] = useState('sections'); // sections, rolls, promote
     const [stats, setStats] = useState([]);
 
+    // Standardized Options
+    const ACADEMIC_YEARS = ['2023-2024', '2024-2025', '2025-2026', '2026-2027'];
+    const DEPARTMENTS = ['CSE', 'ECE', 'ME', 'CE', 'Management', 'Computer Applications', 'Basic Sciences'];
+    const PROGRAMS = ['B.Tech', 'M.Tech', 'BBA', 'MBA', 'BCA', 'MCA', 'PhD'];
+    const SEMESTERS = [1, 2, 3, 4, 5, 6, 7, 8];
+
     // Form States
-    const [sectionForm, setSectionForm] = useState({ program: '', semester: '', maxCapacity: 60 });
-    const [rollForm, setRollForm] = useState({ program: '', semester: '' });
-    const [promoteForm, setPromoteForm] = useState({ program: '', currentSemester: '', nextSemester: '' });
-    const [promoteStudents, setPromoteStudents] = useState([]);
+    const [sectionForm, setSectionForm] = useState({ program: '', department: '', semester: '', maxCapacity: 60 });
+    const [rollForm, setRollForm] = useState({ program: '', department: '', semester: '', section: '' }); // Added section
+    const [availableSections, setAvailableSections] = useState([]); // Dynamic sections
 
     const [loading, setLoading] = useState(false);
 
@@ -27,6 +35,32 @@ const AcademicManager = () => {
             setStats(res.data);
         } catch (error) {
             console.error("Stats error", error);
+        }
+    };
+
+    // Fetch sections when rollForm filters change
+    useEffect(() => {
+        if (rollForm.program && rollForm.department && rollForm.semester) {
+            fetchSections();
+        } else {
+            setAvailableSections([]);
+        }
+    }, [rollForm.program, rollForm.department, rollForm.semester]);
+
+    const fetchSections = async () => {
+        try {
+            const res = await api.get('/academic/sections', {
+                params: {
+                    universityId: user.universityId,
+                    program: rollForm.program,
+                    department: rollForm.department,
+                    semester: rollForm.semester
+                }
+            });
+            setAvailableSections(res.data);
+        } catch (error) {
+            console.error("Error fetching sections", error);
+            setAvailableSections([]);
         }
     };
 
@@ -65,130 +99,166 @@ const AcademicManager = () => {
         setLoading(false);
     };
 
-    const handlePromote = async (e) => {
-        e.preventDefault();
-        if (!window.confirm("This will promote students and archive current data. Continue?")) return;
-
-        setLoading(true);
-        try {
-            // Needed: Fetch students eligible for promotion first?
-            // For now, this is a distinct action - usually we'd select students first.
-            // Simplified: Promote ALL in that Sem/Program
-            toast.error("Please implement student selection logic first!");
-        } catch (error) {
-            toast.error("Failed");
-        }
-        setLoading(false);
-    };
+    const InputSelect = ({ label, value, onChange, options, icon: Icon, required = false }) => (
+        <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <div className="relative group">
+                {Icon && <Icon size={18} className="absolute left-3 top-2.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />}
+                <select
+                    value={value}
+                    onChange={onChange}
+                    className={`w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all p-2.5 ${Icon ? 'pl-10' : ''}`}
+                    required={required}
+                >
+                    <option value="">Select {label}</option>
+                    {options.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Academic Core</h1>
-            <p className="text-slate-500 mb-8">Manage Sections, Roll Numbers, and Semester Progression.</p>
+        <div className="p-8 bg-slate-50 min-h-screen">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-3xl font-bold text-slate-800 mb-2">Academic Core</h1>
+                <p className="text-slate-500 mb-8">Manage Sections, Roll Numbers, and Semester Progression.</p>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {stats.slice(0, 3).map((stat, idx) => (
-                    <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="font-bold text-lg text-slate-800">{stat._id.program}</h3>
-                                <p className="text-sm font-medium text-slate-400">Semester {stat._id.semester}</p>
-                            </div>
-                            <div className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded text-xs font-bold">
-                                {stat.count} Students
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {stats.slice(0, 4).map((stat, idx) => (
+                        <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -mr-8 -mt-8 group-hover:bg-indigo-100 transition"></div>
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg uppercase tracking-wider">{stat._id.program}</span>
+                                    <span className="font-bold text-slate-400">Sem {stat._id.semester}</span>
+                                </div>
+                                <h3 className="text-3xl font-bold text-slate-800 mb-1">{stat.count}</h3>
+                                <p className="text-slate-400 text-sm">Total Students</p>
+
+                                <div className="mt-4 pt-4 border-t border-slate-50 grid grid-cols-2 gap-2 text-xs">
+                                    <div className="text-slate-500">Unassigned: <strong className={stat.unassignedSection > 0 ? "text-amber-500" : "text-emerald-500"}>{stat.unassignedSection}</strong></div>
+                                    <div className="text-slate-500 text-right">No Roll: <strong className={stat.unassignedRoll > 0 ? "text-red-500" : "text-emerald-500"}>{stat.unassignedRoll}</strong></div>
+                                </div>
                             </div>
                         </div>
-                        <div className="mt-4 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Unassigned Sections</span>
-                                <span className={`font-bold ${stat.unassignedSection > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>{stat.unassignedSection}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">No Roll Number</span>
-                                <span className={`font-bold ${stat.unassignedRoll > 0 ? 'text-red-500' : 'text-emerald-500'}`}>{stat.unassignedRoll}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Main Interface */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="flex border-b border-slate-100">
-                    <button onClick={() => setActiveTab('sections')} className={`px-8 py-4 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'sections' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-800'}`}>
-                        <Layers size={18} /> Sectioning
-                    </button>
-                    <button onClick={() => setActiveTab('rolls')} className={`px-8 py-4 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'rolls' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-800'}`}>
-                        <Hash size={18} /> Roll Numbers
-                    </button>
-                    <button onClick={() => setActiveTab('promote')} className={`px-8 py-4 font-bold text-sm transition-colors flex items-center gap-2 ${activeTab === 'promote' ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50' : 'text-slate-500 hover:text-slate-800'}`}>
-                        <Award size={18} /> Progression
-                    </button>
+                    ))}
                 </div>
 
-                <div className="p-8">
-                    {activeTab === 'sections' && (
-                        <div className="max-w-xl">
-                            <h2 className="text-xl font-bold text-slate-800 mb-4">Auto-Assign Sections</h2>
-                            <p className="text-sm text-slate-500 mb-6">Automatically distributes unassigned students into sections (A, B, C...) based on capacity.</p>
+                {/* Main Action Area */}
+                <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col md:flex-row min-h-[500px]">
 
-                            <form onSubmit={handleAssignSections} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Program</label>
-                                    <input type="text" value={sectionForm.program} onChange={e => setSectionForm({ ...sectionForm, program: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. B.Tech" required />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Semester</label>
-                                        <input type="number" value={sectionForm.semester} onChange={e => setSectionForm({ ...sectionForm, semester: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. 1" required />
+                    {/* Sidebar Nav */}
+                    <div className="w-full md:w-64 bg-slate-50 border-r border-slate-100 p-6 flex flex-col gap-2">
+                        <button onClick={() => setActiveTab('sections')} className={`p-4 rounded-xl font-bold text-sm text-left flex items-center gap-3 transition-all ${activeTab === 'sections' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-500 hover:bg-slate-100'}`}>
+                            <Layers size={20} /> Sectioning
+                        </button>
+                        <button onClick={() => setActiveTab('rolls')} className={`p-4 rounded-xl font-bold text-sm text-left flex items-center gap-3 transition-all ${activeTab === 'rolls' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-slate-500 hover:bg-slate-100'}`}>
+                            <Hash size={20} /> Roll Numbers
+                        </button>
+                        <button onClick={() => setActiveTab('promote')} className={`p-4 rounded-xl font-bold text-sm text-left flex items-center gap-3 transition-all ${activeTab === 'promote' ? 'bg-amber-600 text-white shadow-lg shadow-amber-200' : 'text-slate-500 hover:bg-slate-100'}`}>
+                            <Award size={20} /> Progression
+                        </button>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className="flex-1 p-8 md:p-12">
+
+                        {activeTab === 'sections' && (
+                            <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-500">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                                        <Layers size={28} />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">Max Capacity</label>
-                                        <input type="number" value={sectionForm.maxCapacity} onChange={e => setSectionForm({ ...sectionForm, maxCapacity: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" placeholder="60" required />
+                                        <h2 className="text-2xl font-bold text-slate-800">Assign Sections</h2>
+                                        <p className="text-slate-500">Distribute students into sections based on capacity.</p>
                                     </div>
                                 </div>
-                                <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold w-full hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-                                    {loading ? <RefreshCcw className="animate-spin" /> : <CheckCircle size={20} />}
-                                    Run Assignment
-                                </button>
-                            </form>
-                        </div>
-                    )}
 
-                    {activeTab === 'rolls' && (
-                        <div className="max-w-xl">
-                            <h2 className="text-xl font-bold text-slate-800 mb-4">Generate Roll Numbers</h2>
-                            <p className="text-sm text-slate-500 mb-6">Generates sequential roll numbers (e.g. A-01, A-02) for students with assigned sections.</p>
-                            <form onSubmit={handleGenerateRolls} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Program</label>
-                                    <input type="text" value={rollForm.program} onChange={e => setRollForm({ ...rollForm, program: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. B.Tech" required />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Semester</label>
-                                    <input type="number" value={rollForm.semester} onChange={e => setRollForm({ ...rollForm, semester: e.target.value })} className="w-full border p-2.5 rounded-xl text-sm" placeholder="e.g. 1" required />
-                                </div>
-                                <button type="submit" disabled={loading} className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold w-full hover:bg-emerald-700 transition flex items-center justify-center gap-2">
-                                    {loading ? <RefreshCcw className="animate-spin" /> : <Hash size={20} />}
-                                    Generate Sequence
-                                </button>
-                            </form>
-                        </div>
-                    )}
+                                <form onSubmit={handleAssignSections} className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <InputSelect label="Program" value={sectionForm.program} onChange={e => setSectionForm({ ...sectionForm, program: e.target.value })} options={PROGRAMS} icon={GraduationCap} required />
+                                        <InputSelect label="Department" value={sectionForm.department} onChange={e => setSectionForm({ ...sectionForm, department: e.target.value })} options={DEPARTMENTS} icon={School} required />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <InputSelect label="Semester" value={sectionForm.semester} onChange={e => setSectionForm({ ...sectionForm, semester: e.target.value })} options={SEMESTERS} icon={BookOpen} required />
 
-                    {activeTab === 'promote' && (
-                        <div className="text-center py-12">
-                            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <AlertCircle size={32} />
+                                        <div className="flex flex-col gap-1.5 w-full">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Max Capacity</label>
+                                            <input
+                                                type="number"
+                                                value={sectionForm.maxCapacity}
+                                                onChange={e => setSectionForm({ ...sectionForm, maxCapacity: e.target.value })}
+                                                className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all p-2.5"
+                                                placeholder="60"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-200">
+                                        {loading ? <RefreshCcw className="animate-spin" /> : <CheckCircle size={20} />}
+                                        Run Auto-Assignment
+                                    </button>
+                                </form>
                             </div>
-                            <h3 className="text-lg font-bold text-slate-800">Use with Caution</h3>
-                            <p className="text-slate-500 max-w-sm mx-auto mb-6">Promotion logic is sensitive. It archives current semester data and resets roll numbers.</p>
-                            <button className="bg-slate-100 text-slate-400 px-6 py-3 rounded-xl font-bold cursor-not-allowed">
-                                Feature Locked (In Development)
-                            </button>
-                        </div>
-                    )}
+                        )}
+
+                        {activeTab === 'rolls' && (
+                            <div className="max-w-xl animate-in fade-in slide-in-from-right-8 duration-500">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                                        <Hash size={28} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-slate-800">Generate Roll Numbers</h2>
+                                        <p className="text-slate-500">Generate sequential IDs (e.g. A-01) for assigned students.</p>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleGenerateRolls} className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <InputSelect label="Program" value={rollForm.program} onChange={e => setRollForm({ ...rollForm, program: e.target.value })} options={PROGRAMS} icon={GraduationCap} required />
+                                        <InputSelect label="Department" value={rollForm.department} onChange={e => setRollForm({ ...rollForm, department: e.target.value })} options={DEPARTMENTS} icon={School} required />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <InputSelect label="Target Semester" value={rollForm.semester} onChange={e => setRollForm({ ...rollForm, semester: e.target.value })} options={SEMESTERS} icon={BookOpen} required />
+                                        <InputSelect
+                                            label="Target Section"
+                                            value={rollForm.section}
+                                            onChange={e => setRollForm({ ...rollForm, section: e.target.value })}
+                                            options={availableSections.length > 0 ? availableSections : ['No Sections Found']}
+                                            icon={Layers}
+                                        />
+                                    </div>
+
+                                    <button type="submit" disabled={loading} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-200">
+                                        {loading ? <RefreshCcw className="animate-spin" /> : <Hash size={20} />}
+                                        Generate Sequence
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+
+                        {activeTab === 'promote' && (
+                            <div className="h-full flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-300">
+                                <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-6">
+                                    <AlertCircle size={40} />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-800 mb-2">Advanced Feature</h3>
+                                <p className="text-slate-500 max-w-md mb-8">Semester promotion involves complex data archiving. This feature is currently locked ensuring system stability.</p>
+                                <button className="bg-slate-100 text-slate-400 px-8 py-3 rounded-xl font-bold cursor-not-allowed">
+                                    feature_locked_by_admin
+                                </button>
+                            </div>
+                        )}
+
+                    </div>
                 </div>
             </div>
         </div>
