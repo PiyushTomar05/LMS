@@ -14,7 +14,9 @@ import {
     LayoutDashboard,
     Users,
     Calendar,
-    Layers
+    Layers,
+    FileText,
+    CreditCard
 } from 'lucide-react';
 
 const Layout = () => {
@@ -45,6 +47,8 @@ const Layout = () => {
                     { label: 'Manage Users', path: '/university/users', icon: Users },
                     { label: 'Manage Courses', path: '/university/courses', icon: BookOpen },
                     { label: 'Academic Core', path: '/university/academic', icon: Layers },
+                    { label: 'Exams', path: '/university/exams', icon: FileText },
+                    { label: 'fees', path: '/university/fees', icon: CreditCard },
                     { label: 'Timetable', path: '/university/timetable', icon: Calendar },
                     { label: 'Academic Calendar', path: '/academic-calendar', icon: Calendar },
                     { label: 'Security', path: '/users/change-password', icon: Lock },
@@ -57,6 +61,7 @@ const Layout = () => {
             case 'STUDENT':
                 return [
                     { label: 'My Enrollment', path: '/dashboard', icon: GraduationCap },
+                    { label: 'My Fees', path: '/student/fees', icon: CreditCard },
                     { label: 'Security', path: '/users/change-password', icon: Lock },
                 ];
             default:
@@ -126,7 +131,7 @@ const Layout = () => {
             </aside>
 
             {/* Main Content Wrapper */}
-            <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 lg:ml-64`}>
+            <div className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 lg:ml-64`}>
                 {/* Header */}
                 <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-20 shadow-sm">
                     <div className="flex items-center gap-4">
