@@ -15,6 +15,13 @@ A comprehensive, multi-tenant Learning Management System designed for universiti
     *   Assignment Submission & Grading
     *   Timetable Management
     *   Announcement System
+*   **Transport Module**:
+    *   Manage bus routes, stops, and schedules.
+    *   Track driver details and vehicle information.
+*   **Course Management**:
+    *   Professors can create and manage courses.
+    *   Schedule classes with weekly timetables.
+    *   Enroll students in courses.
 *   **Modern UI**: Built with React and Tailwind CSS for a responsive and intuitive user experience.
 
 ## Technology Stack
