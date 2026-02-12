@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const TransportRouteSchema = new mongoose.Schema({
     universityId: { type: mongoose.Schema.Types.ObjectId, ref: 'School', required: true },
-    routeNumber: { type: String, required: true }, // e.g., "R-101"
+    routeNumber: { type: String, required: true, index: true, unique: true }, // e.g., "R-101"
     name: { type: String, required: true }, // e.g., "North City Loop"
 
     driverName: String,
