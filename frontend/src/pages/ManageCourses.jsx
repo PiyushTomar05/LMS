@@ -17,11 +17,22 @@ const ManageCourses = () => {
     // Local state for adding a slot
     const [newSlot, setNewSlot] = useState({ day: 'Monday', startTime: '', endTime: '' });
 
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         if (user?.universityId) {
-            fetchCourses();
-            fetchProfessors();
-            fetchStudents();
+            const loadData = async () => {
+                setIsLoading(true);
+                try {
+                    await Promise.all([fetchCourses(), fetchProfessors(), fetchStudents()]);
+                } catch (error) {
+                    console.error("Error loading initial data", error);
+                    toast.error("Failed to load dashboard data");
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            loadData();
         }
     }, [user]);
 
@@ -31,6 +42,7 @@ const ManageCourses = () => {
             setCourses(response.data);
         } catch (error) {
             console.error("Error fetching courses", error);
+            toast.error("Failed to refresh courses");
         }
     };
 
@@ -104,6 +116,10 @@ const ManageCourses = () => {
             setSelectedStudents([...selectedStudents, studentId]);
         }
     };
+
+    if (isLoading) {
+        return <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center text-purple-600 font-bold text-xl">Loading...</div>;
+    }
 
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
