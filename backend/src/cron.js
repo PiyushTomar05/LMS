@@ -1,3 +1,7 @@
+/**
+ * Cron jobs for the application.
+ * Currently handles checking for expired university subscriptions.
+ */
 const cron = require('node-cron');
 const University = require('./models/University');
 
