@@ -24,27 +24,6 @@ const deleteUser = async (req, res) => {
     }
 };
 
-// ... importUsers ... 
-
-if (newUsers.length > 0) {
-    await User.insertMany(newUsers);
-    fs.appendFileSync(debugLogPath, `Successfully inserted ${newUsers.length} users.\n`);
-} else {
-    fs.appendFileSync(debugLogPath, `All users were duplicates. No new users inserted.\n`);
-}
-
-// Log Import
-await logAction('IMPORT', { id: req.user?._id, role: 'ADMIN' }, `Bulk Import: ${newUsers.length} users`, {
-    totalRows: usersToCreate.length,
-    imported: newUsers.length,
-    duplicates: existingEmails.length
-}, 'SUCCESS');
-
-res.status(200).json({
-    message: `Processed ${usersToCreate.length} rows. Imported ${newUsers.length} new users. Skipped ${existingEmails.length} duplicates.`
-});
-
-// ... deleteSelectedUsers ...
 
 const deleteSelectedUsers = async (req, res) => {
     try {
