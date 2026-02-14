@@ -1,3 +1,7 @@
+/**
+ * Resource Model
+ * Represents a file or link shared in a class.
+ */
 const mongoose = require('mongoose');
 
 const resourceSchema = new mongoose.Schema({
