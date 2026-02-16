@@ -1,3 +1,7 @@
+/**
+ * Utility script to bulk update passwords for specific users.
+ * Usage: node src/updatePasswords.js
+ */
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
