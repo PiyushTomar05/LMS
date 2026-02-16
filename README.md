@@ -24,6 +24,10 @@ A comprehensive, multi-tenant Learning Management System designed for universiti
     *   Enroll students in courses.
 *   **Modern UI**: Built with React and Tailwind CSS for a responsive and intuitive user experience.
 
+## Contributing
+
+Interested in contributing? Check out our [Contribution Guide](CONTRIBUTING.md).
+
 ## Technology Stack
 
 *   **Frontend**: React, Vite, Tailwind CSS
