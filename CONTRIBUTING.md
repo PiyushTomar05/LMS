@@ -64,6 +64,10 @@ Please ensure your changes are made in the appropriate directory.
 - Use meaningful variable and function names.
 - Comment your code where necessary.
 
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started.
+
 ## Reporting Issues
 
 If you find a bug or have a feature request, please open an issue on GitHub.
