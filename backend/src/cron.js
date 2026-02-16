@@ -6,7 +6,8 @@ const cron = require('node-cron');
 const University = require('./models/University');
 
 const startCronJobs = () => {
-    // Run every day at midnight
+    // Run every day at midnight (00:00)
+    // format: minute hour day-of-month month day-of-week
     cron.schedule('0 0 * * *', async () => {
         console.log('Running subscription check...');
         try {
