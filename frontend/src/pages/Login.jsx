@@ -62,6 +62,7 @@ const Login = () => {
                             </div>
                             <input
                                 type="email"
+                                autoComplete="email"
                                 required
                                 className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
                                 placeholder="name@university.com"
@@ -79,6 +80,7 @@ const Login = () => {
                             </div>
                             <input
                                 type="password"
+                                autoComplete="current-password"
                                 required
                                 className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all duration-200 sm:text-sm shadow-sm"
                                 placeholder="••••••••"
