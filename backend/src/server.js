@@ -7,9 +7,24 @@ const authRoutes = require('./routes/authRoutes');
 dotenv.config();
 
 const app = express();
+const helmet = require('helmet');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+const mongoSanitize = require('express-mongo-sanitize');
 
-// Middleware
-app.use(cors());
+// Security Middleware
+app.use(helmet()); // Set Security Headers
+app.use(xss()); // Prevent XSS attacks
+app.use(hpp()); // Prevent HTTP Parameter Pollution
+app.use(mongoSanitize()); // Prevent NoSQL injection
+
+// CORS Configuration
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Restrict to frontend URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rate Limiting (Global)
@@ -31,7 +46,6 @@ app.use('/auth/login', authLimiter);
 
 
 // Database Connection
-// Database Connection
 connectDB();
 
 const startCronJobs = require('./cron');
@@ -52,7 +66,7 @@ app.use('/fees', require('./routes/feeRoutes'));
 app.use('/academic', require('./routes/academicRoutes'));
 app.use('/grades', require('./routes/gradeRoutes'));
 app.use('/exams', require('./routes/examRoutes'));
-app.use('/reports', require('./routes/reportRoutes')); // Added Reports
+app.use('/reports', require('./routes/reportRoutes'));
 
 
 const http = require('http');
@@ -61,7 +75,7 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // Adjust in production
+        origin: process.env.FRONTEND_URL || "http://localhost:5173", // Match Express CORS
         methods: ["GET", "POST"]
     }
 });

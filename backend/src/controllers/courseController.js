@@ -1,4 +1,5 @@
 const Course = require('../models/Course');
+const Grade = require('../models/Grade');
 
 // @desc    Create a new course
 // @route   POST /courses
@@ -74,7 +75,47 @@ const updateCourse = async (req, res) => {
 const enrollStudents = async (req, res) => {
     try {
         const { id } = req.params;
-        const { studentIds } = req.body; // Expecting array of student IDs
+        let { studentIds } = req.body; // Expecting array of student IDs
+
+        const course = await Course.findById(id);
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        const deniedStudents = [];
+
+        // Prerequisite Check
+        if (course.prerequisites && course.prerequisites.length > 0) {
+            const allowedStudents = [];
+
+            for (const studentId of studentIds) {
+                // Check if student passed ALL prereqs
+                // We find grades for this student in the prerequisite courses where they passed (gradePoints >= 4)
+                const passingGrades = await Grade.find({
+                    studentId,
+                    courseId: { $in: course.prerequisites },
+                    gradePoints: { $gte: 4 }
+                });
+
+                const passedCourseIds = new Set(passingGrades.map(g => g.courseId.toString()));
+
+                // Check coverage
+                const hasPassedAll = course.prerequisites.every(pId => passedCourseIds.has(pId.toString()));
+
+                if (hasPassedAll) {
+                    allowedStudents.push(studentId);
+                } else {
+                    deniedStudents.push(studentId);
+                }
+            }
+            // Update the list to only include allowed students
+            studentIds = allowedStudents;
+        }
+
+        if (studentIds.length === 0) {
+            return res.status(400).json({
+                message: 'No eligible students to enroll. Prerequisites not met.',
+                deniedIds: deniedStudents
+            });
+        }
 
         const updatedCourse = await Course.findByIdAndUpdate(
             id,
@@ -83,7 +124,12 @@ const enrollStudents = async (req, res) => {
         ).populate('professorId', 'firstName lastName')
             .populate('students', 'firstName lastName email');
 
-        res.json(updatedCourse);
+        res.json({
+            message: `Enrolled ${studentIds.length} students.`,
+            deniedCount: deniedStudents.length,
+            deniedIds: deniedStudents,
+            course: updatedCourse
+        });
     } catch (error) {
         res.status(400).json({ message: error.message });
     }

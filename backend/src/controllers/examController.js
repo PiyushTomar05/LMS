@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Exam = require('../models/Exam');
 const ExamSchedule = require('../models/ExamSchedule');
 const Course = require('../models/Course');
@@ -29,14 +30,21 @@ const generateExamTimetable = async (req, res) => {
     // slotsPerDay = ["09:00-12:00", "14:00-17:00"] 
     // Simplified: Just start times ["09:00", "14:00"] assuming 3hr duration
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         // Feature: Block logic for specific students? 
         // Note: Schedule generation is admin side. It doesn't block *generation*. 
         // It should block *students* from viewing/registering.
         // For now, let's just add a warning or check if university has strict fee policy.
 
-        const exam = await Exam.findById(id);
-        if (!exam) return res.status(404).json({ message: 'Exam not found' });
+        const exam = await Exam.findById(id).session(session);
+        if (!exam) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: 'Exam not found' });
+        }
 
         // 1. Fetch Resources
         // Fetch courses for this academic year/semester
@@ -45,12 +53,18 @@ const generateExamTimetable = async (req, res) => {
         // Let's fetch all courses for the exam's universityId.
         const courses = await Course.find({ universityId: exam.universityId })
             .populate('students') // Needed for collision detection
+            .session(session)
             .lean(); // Faster
 
-        const rooms = await Classroom.find({ universityId: exam.universityId }).sort({ capacity: 1 });
-        const professors = await User.find({ universityId: exam.universityId, role: 'PROFESSOR' });
+        const rooms = await Classroom.find({ universityId: exam.universityId }).sort({ capacity: 1 }).session(session);
+        // Note: finding professors doesn't strictly need session as we don't modify them, but good practice if checking consistency
+        // const professors = await User.find({ universityId: exam.universityId, role: 'PROFESSOR' }).session(session);
 
-        if (courses.length === 0) return res.status(400).json({ message: "No courses found to schedule." });
+        if (courses.length === 0) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ message: "No courses found to schedule." });
+        }
 
         // 2. Build Conflict Graph
         // Graph where Node = Course, Edge = Shared Students
@@ -148,13 +162,15 @@ const generateExamTimetable = async (req, res) => {
             }
 
             if (!assigned) {
+                await session.abortTransaction();
+                session.endSession();
                 return res.status(400).json({ message: `Failed to schedule course: ${course.name}. Not enough slots.` });
             }
         }
 
         // 5. Assign Rooms & Save to DB
         // Clear old schedule
-        await ExamSchedule.deleteMany({ examId: id });
+        await ExamSchedule.deleteMany({ examId: id }).session(session);
 
         const schedulesToSave = [];
 
@@ -178,6 +194,8 @@ const generateExamTimetable = async (req, res) => {
                 );
 
                 if (!validRoom) {
+                    await session.abortTransaction();
+                    session.endSession();
                     return res.status(400).json({ message: `Room constraint failed for ${course.name} in slot ${slot.date}` });
                 }
 
@@ -195,15 +213,20 @@ const generateExamTimetable = async (req, res) => {
             }
         }
 
-        await ExamSchedule.insertMany(schedulesToSave);
+        await ExamSchedule.insertMany(schedulesToSave, { session });
 
         // Update status
         exam.status = 'PUBLISHED';
-        await exam.save();
+        await exam.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         res.json({ message: "Timetable generated successfully", count: schedulesToSave.length });
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(error);
         res.status(500).json({ message: error.message });
     }
