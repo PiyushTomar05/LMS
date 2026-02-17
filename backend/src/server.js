@@ -45,16 +45,16 @@ app.use(express.json());
 // Rate Limiting (Global)
 const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 500, // Increased to 500 for demo purposes
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use(limiter);
 
-// Auth Specific Limiter (Stricter)
+// Auth Specific Limiter
 const authLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
-    max: 10, // 10 Login attempts per hour
+    max: 50, // Increased to 50 for testing
     message: 'Too many login attempts, please try again later.'
 });
 app.use('/auth/login', authLimiter);
