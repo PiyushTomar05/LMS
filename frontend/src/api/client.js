@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5000', // Base URL for all routes
-    // TODO: Use process.env.REACT_APP_API_URL or import.meta.env.VITE_API_URL instead of hardcoded URL
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
     headers: {
         'Content-Type': 'application/json',
     },
