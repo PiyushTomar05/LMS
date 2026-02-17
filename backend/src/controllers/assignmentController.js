@@ -1,7 +1,11 @@
 const { Assignment, Submission } = require('../models/Assignment');
 const path = require('path');
 
-// Grade Submission (Teacher)
+/**
+ * Grade a student submission.
+ * @route PUT /api/assignments/submission/:submissionId
+ * @access Private (Teacher)
+ */
 exports.gradeSubmission = async (req, res) => {
     try {
         const { submissionId } = req.params;
