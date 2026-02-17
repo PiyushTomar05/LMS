@@ -5,7 +5,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const BASE_URL = 'http://localhost:5000';
 
 async function checkHealth() {
-    console.log(`🏥 Starting System Health Check on ${BASE_URL}...\n`);
+    console.log(`🏥 Starting System Health Check on ${BASE_URL} at ${new Date().toISOString()}...\n`);
 
     const checks = [
         { name: 'Server Root', url: '/', method: 'GET' },
