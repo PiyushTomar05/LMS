@@ -111,10 +111,26 @@ const Login = () => {
                     </div>
                 </form>
 
-                <div className="mt-8 text-center bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <p className="text-xs text-slate-500">
-                        Default: <span className="text-primary-700 font-bold font-mono">dean@university.com</span> / <span className="text-primary-700 font-bold font-mono">university123</span>
-                    </p>
+                <div className="mt-8 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+                    <p className="font-bold text-slate-700 mb-2 uppercase tracking-wide">Demo Credentials</p>
+                    <div className="grid grid-cols-1 gap-2 text-slate-600">
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                            <span className="font-semibold text-primary-700">Super Admin</span>
+                            <span className="font-mono bg-white px-1 rounded border">admin@university.com / admin123</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                            <span className="font-semibold text-primary-700">School Admin</span>
+                            <span className="font-mono bg-white px-1 rounded border">dean@university.com / 123456</span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-1">
+                            <span className="font-semibold text-primary-700">Faculty</span>
+                            <span className="font-mono bg-white px-1 rounded border">turing@university.com / 123456</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="font-semibold text-primary-700">Student</span>
+                            <span className="font-mono bg-white px-1 rounded border">student1@university.com / 123456</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
