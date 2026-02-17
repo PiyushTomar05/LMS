@@ -71,8 +71,11 @@ const getMyFees = async (req, res) => {
     }
 };
 
-// @desc    Pay Fee (Record Transaction)
-// @route   POST /fees/pay
+/**
+ * Record a fee payment transaction.
+ * @route POST /fees/pay
+ * @access Private (Student/Parent)
+ */
 const payFee = async (req, res) => {
     try {
         const { feePaymentId, amount, method, transactionId, remarks } = req.body;
