@@ -120,15 +120,15 @@ const Login = () => {
                         </div>
                         <div className="flex justify-between items-center border-b border-slate-200 pb-1">
                             <span className="font-semibold text-primary-700">School Admin</span>
-                            <span className="font-mono bg-white px-1 rounded border">dean@university.com / 123456</span>
+                            <span className="font-mono bg-white px-1 rounded border">dean@university.com / university123</span>
                         </div>
                         <div className="flex justify-between items-center border-b border-slate-200 pb-1">
                             <span className="font-semibold text-primary-700">Faculty</span>
-                            <span className="font-mono bg-white px-1 rounded border">turing@university.com / 123456</span>
+                            <span className="font-mono bg-white px-1 rounded border">vihaan.patel1@univ.edu / 123456</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="font-semibold text-primary-700">Student</span>
-                            <span className="font-mono bg-white px-1 rounded border">student1@university.com / 123456</span>
+                            <span className="font-mono bg-white px-1 rounded border">vivaan.verma1@univ.edu / 123456</span>
                         </div>
                     </div>
                 </div>
