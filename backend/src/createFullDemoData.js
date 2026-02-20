@@ -28,11 +28,18 @@ const createFullDemoData = async () => {
             address: '123 Education Lane, Tech City'
         });
 
-        // 3. Create Admin
-        const password = await bcrypt.hash('123456', 10);
+        // 3a. Create Super Admin (Matches UI)
+        await User.create({
+            firstName: 'Super', lastName: 'Admin',
+            email: 'admin@university.com', password: await bcrypt.hash('admin123', 10),
+            role: 'SUPER_ADMIN'
+        });
+
+        // 3b. Create University Admin (Matches UI)
+        const uniPassword = await bcrypt.hash('university123', 10);
         await User.create({
             firstName: 'Dean', lastName: 'Skinner',
-            email: 'dean@university.com', password: password,
+            email: 'dean@university.com', password: uniPassword,
             role: 'UNIVERSITY_ADMIN', universityId: university._id
         });
 
@@ -70,23 +77,23 @@ const createFullDemoData = async () => {
         // 7. Create Courses with Strict Fields
         const courseData = [
             // CS (Turing) - 40 Students, Core
-            { name: 'Intro to CS', section: 'A', professorId: professors[0]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
-            { name: 'Intro to CS', section: 'B', professorId: professors[0]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
-            { name: 'Algorithms', section: 'A', professorId: professors[0]._id, type: 'Core', weeklyHours: 4, studentCount: 30, requiredRoomType: 'Lecture Hall' },
+            { name: 'Intro to CS', code: 'CS101', section: 'A', professorId: professors[0]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
+            { name: 'Intro to CS', code: 'CS101', section: 'B', professorId: professors[0]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
+            { name: 'Algorithms', code: 'CS201', section: 'A', professorId: professors[0]._id, type: 'Core', weeklyHours: 4, studentCount: 30, requiredRoomType: 'Lecture Hall' },
 
             // Programming (Lovelace) - Labs (20 students)
-            { name: 'Web Dev', section: 'A', professorId: professors[1]._id, type: 'Lab', weeklyHours: 4, studentCount: 20, requiredRoomType: 'Lab' },
-            { name: 'Web Dev', section: 'B', professorId: professors[1]._id, type: 'Lab', weeklyHours: 4, studentCount: 20, requiredRoomType: 'Lab' },
-            { name: 'Database', section: 'A', professorId: professors[1]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
+            { name: 'Web Dev', code: 'CS202', section: 'A', professorId: professors[1]._id, type: 'Lab', weeklyHours: 4, studentCount: 20, requiredRoomType: 'Lab' },
+            { name: 'Web Dev', code: 'CS202', section: 'B', professorId: professors[1]._id, type: 'Lab', weeklyHours: 4, studentCount: 20, requiredRoomType: 'Lab' },
+            { name: 'Database', code: 'CS301', section: 'A', professorId: professors[1]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
 
             // Systems (Hopper)
-            { name: 'OS', section: 'A', professorId: professors[2]._id, type: 'Core', weeklyHours: 3, studentCount: 35, requiredRoomType: 'Lecture Hall' },
-            { name: 'Compilers', section: 'A', professorId: professors[2]._id, type: 'Core', weeklyHours: 3, studentCount: 35, requiredRoomType: 'Lecture Hall' },
+            { name: 'OS', code: 'CS302', section: 'A', professorId: professors[2]._id, type: 'Core', weeklyHours: 3, studentCount: 35, requiredRoomType: 'Lecture Hall' },
+            { name: 'Compilers', code: 'CS303', section: 'A', professorId: professors[2]._id, type: 'Core', weeklyHours: 3, studentCount: 35, requiredRoomType: 'Lecture Hall' },
 
             // Math (Newton)
-            { name: 'Calculus', section: 'A', professorId: professors[3]._id, type: 'Core', weeklyHours: 5, studentCount: 40, requiredRoomType: 'Lecture Hall' },
-            { name: 'Physics', section: 'A', professorId: professors[3]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
-            { name: 'Physics Lab', section: 'A', professorId: professors[3]._id, type: 'Lab', weeklyHours: 2, studentCount: 20, requiredRoomType: 'Lab' },
+            { name: 'Calculus', code: 'MAT101', section: 'A', professorId: professors[3]._id, type: 'Core', weeklyHours: 5, studentCount: 40, requiredRoomType: 'Lecture Hall' },
+            { name: 'Physics', code: 'PHY101', section: 'A', professorId: professors[3]._id, type: 'Core', weeklyHours: 3, studentCount: 40, requiredRoomType: 'Lecture Hall' },
+            { name: 'Physics Lab', code: 'PHY101L', section: 'A', professorId: professors[3]._id, type: 'Lab', weeklyHours: 2, studentCount: 20, requiredRoomType: 'Lab' },
         ];
 
         const coursesWithUni = courseData.map(c => ({ ...c, universityId: university._id }));

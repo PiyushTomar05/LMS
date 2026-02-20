@@ -64,9 +64,20 @@ app.use('/auth/login', authLimiter);
 connectDB();
 
 const startCronJobs = require('./cron');
+const errorHandler = require('./middleware/errorMiddleware');
+
 startCronJobs();
 
 // Routes
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        database: require('mongoose').connection.readyState === 1 ? 'connected' : 'disconnected'
+    });
+});
+
 app.use('/auth', authRoutes);
 app.use('/universities', require('./routes/universityRoutes'));
 app.use('/courses', require('./routes/courseRoutes'));
@@ -83,6 +94,8 @@ app.use('/grades', require('./routes/gradeRoutes'));
 app.use('/exams', require('./routes/examRoutes'));
 app.use('/reports', require('./routes/reportRoutes'));
 
+// Global Error Handler - Must be last
+app.use(errorHandler);
 
 const http = require('http');
 const { Server } = require('socket.io');

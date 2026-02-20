@@ -1,30 +1,39 @@
 const mongoose = require('mongoose');
 const User = require('./src/models/User');
+const connectDB = require('./src/config/db');
 require('dotenv').config();
 
-const run = async () => {
+const checkUsers = async () => {
+    await connectDB();
     try {
-        await mongoose.connect(process.env.MONGO_URI);
+        console.log("--- Users in DB ---");
+        const users = await User.find({}, 'email role firstName lastName');
+        if (users.length === 0) {
+            console.log("No users found.");
+        } else {
+            console.log(JSON.stringify(users, null, 2));
+        }
 
-        const res = await User.updateOne(
-            { email: 'piyushtomarp@gmail.com' },
-            {
-                $set: {
-                    semester: 1,
-                    academicYear: '2025-2026',
-                    section: null, // Ensure unassigned
-                    rollNumber: null // Ensure no roll
+        // Also check if we can identify the password hash for 'dean' to see if others match it (roughly)
+        // actually we can't easily reverse hash, but we can see if they are identical strings implying same password
+        const fullUsers = await User.find({}, 'email password');
+        console.log("\n--- Password Hash Comparison ---");
+        const dean = fullUsers.find(u => u.email === 'dean@university.com');
+        if (dean) {
+            console.log(`Dean's hash starts with: ${dean.password.substring(0, 20)}...`);
+            fullUsers.forEach(u => {
+                if (u.email !== 'dean@university.com') {
+                    const match = u.password === dean.password;
+                    console.log(`${u.email}: Hash matches Dean's? ${match}`);
                 }
-            }
-        );
+            });
+        }
 
-        console.log("Update result:", res);
-
-    } catch (e) {
-        console.error(e);
-    } finally {
-        await mongoose.disconnect();
+        process.exit();
+    } catch (error) {
+        console.error(error);
+        process.exit(1);
     }
 };
 
-run();
+checkUsers();
