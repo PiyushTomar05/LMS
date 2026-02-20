@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const User = require('./models/User');
-const University = require('./models/University');
-const connectDB = require('./config/db');
+const User = require('../src/models/User');
+const University = require('../src/models/University');
+const connectDB = require('../src/config/db');
 
 const seedData = async () => {
     await connectDB();
